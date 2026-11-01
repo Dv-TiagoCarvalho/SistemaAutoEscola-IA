@@ -59,6 +59,9 @@ public class ConfiguracaoAutoescola {
     @Column(name = "exigir_exames_aulas", nullable = false)
     private boolean exigirExamesParaAulas = true;
 
+    @Column(name = "proximo_recibo", nullable = false)
+    private long proximoRecibo = 1;
+
     @Column(name = "fuso_horario", nullable = false, length = 40)
     private String fusoHorario = "America/Sao_Paulo";
 

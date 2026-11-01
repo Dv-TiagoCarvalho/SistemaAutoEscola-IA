@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -288,4 +291,9 @@ Future<bool> confirmar(BuildContext context, String titulo, String texto, {Strin
     ),
   );
   return r == true;
+}
+
+/// Salva/baixa um arquivo (abre o diálogo "Salvar como" do aparelho ou baixa no navegador).
+Future<void> salvarArquivo(String nome, List<int> bytes) async {
+  await FilePicker.platform.saveFile(fileName: nome, bytes: Uint8List.fromList(bytes));
 }

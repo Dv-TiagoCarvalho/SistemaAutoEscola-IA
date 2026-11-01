@@ -92,3 +92,10 @@ O instrutor registra a aula (realizada/falta, km, conteúdo, nota) só das próp
 **App:** aba Agenda (dia a dia para a equipe; "próximas aulas" para instrutor e aluno) e aba Cadastros (pacotes, instrutores, veículos e equipe).
 
 **Pendente na Fase 3:** a opção "exigir exames" ainda não aparece na tela de Configurações (só no banco).
+
+## Fase 4 — Financeiro
+
+Baixa de títulos (forma, data, multa/juros e desconto), recibo numerado em PDF (numeração por autoescola, sem repetir),
+estorno (ADMIN; reabre o título e mantém o recibo marcado como estornado), cancelamento de título, títulos avulsos,
+despesas (ADMIN) e resumo com fluxo dos últimos 6 meses. `PaymentProvider` é a interface para integrar gateway de
+pagamento (hoje só existe o `ManualPaymentProvider`, que registra o recebimento no balcão). O recibo não é nota fiscal.

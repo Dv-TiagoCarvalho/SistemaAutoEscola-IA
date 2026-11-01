@@ -8,6 +8,7 @@ import '../features/alunos_page.dart';
 import '../features/autoescolas_page.dart';
 import '../features/agenda_page.dart';
 import '../features/cadastros_page.dart';
+import '../features/financeiro_page.dart';
 import '../features/configuracoes_page.dart';
 import '../features/inicio_page.dart';
 import '../features/login_page.dart';
@@ -28,6 +29,7 @@ const rotas = [
   Rota('/autoescolas', 'Autoescolas', Icons.business_outlined, {'SUPER_ADMIN'}),
   Rota('/alunos', 'Alunos', Icons.school_outlined, {'ADMIN', 'SECRETARIA'}),
   Rota('/agenda', 'Agenda', Icons.calendar_month_outlined, {'ADMIN', 'SECRETARIA', 'INSTRUTOR', 'ALUNO'}),
+  Rota('/financeiro', 'Financeiro', Icons.payments_outlined, {'ADMIN', 'SECRETARIA'}),
   Rota('/cadastros', 'Cadastros', Icons.folder_open_outlined, {'ADMIN', 'SECRETARIA'}),
   Rota('/configuracoes', 'Configurações', Icons.settings_outlined, {'ADMIN'}),
 ];
@@ -68,6 +70,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/alunos/:id', builder: (_, s) => AlunoDetalhePage(id: int.parse(s.pathParameters['id']!))),
           GoRoute(path: '/alunos/:id/editar', builder: (_, s) => AlunoFormPage(id: int.parse(s.pathParameters['id']!))),
           GoRoute(path: '/agenda', builder: (_, __) => const AgendaPage()),
+          GoRoute(path: '/financeiro', builder: (_, __) => const FinanceiroPage()),
           GoRoute(path: '/cadastros', builder: (_, __) => const CadastrosPage()),
           GoRoute(path: '/configuracoes', builder: (_, __) => const ConfiguracoesPage()),
         ],

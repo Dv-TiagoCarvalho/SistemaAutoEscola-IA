@@ -54,13 +54,41 @@ class Shell extends ConsumerWidget {
         ]),
       );
     }
+    final muitos = itens.length > 5;
+    final visiveis = muitos ? itens.take(4).toList() : itens;
+    final extras = muitos ? itens.skip(4).toList() : <Rota>[];
+    final indiceMobile = indice < visiveis.length ? indice : visiveis.length; // "Mais" = último
     return Scaffold(
       appBar: appBar,
       body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: indice,
-        onDestinationSelected: (i) => context.go(itens[i].caminho),
-        destinations: [for (final r in itens) NavigationDestination(icon: Icon(r.icone), label: r.titulo)],
+        selectedIndex: indiceMobile,
+        onDestinationSelected: (i) {
+          if (i < visiveis.length) {
+            context.go(visiveis[i].caminho);
+          } else {
+            showModalBottomSheet<void>(
+              context: context,
+              builder: (_) => SafeArea(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  for (final r in extras)
+                    ListTile(
+                      leading: Icon(r.icone),
+                      title: Text(r.titulo),
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.go(r.caminho);
+                      },
+                    ),
+                ]),
+              ),
+            );
+          }
+        },
+        destinations: [
+          for (final r in visiveis) NavigationDestination(icon: Icon(r.icone), label: r.titulo),
+          if (muitos) const NavigationDestination(icon: Icon(Icons.menu), label: 'Mais'),
+        ],
       ),
     );
   }
