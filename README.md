@@ -106,3 +106,11 @@ Exames teórico/prático por processo: prático só depois de aprovado no teóri
 no prático encerra o processo, reprovação volta para "Em aulas". Resultado lançado manualmente (sem integração com órgão de trânsito).
 Frota: validade de licenciamento e seguro, revisão por km, histórico de manutenção e alertas; o km do veículo sobe sozinho
 quando o instrutor registra a aula ou uma manutenção. Pendente: disponibilidade semanal do instrutor.
+
+## Fase 6 — Teórico e simulados
+
+- **Banco de questões por autoescola** (`/api/questoes`): CRUD, ativar/inativar e importação por CSV (`tema;enunciado;A;B;C;D;correta;explicacao`). O sistema **não traz questões oficiais** (direitos autorais): cadastre as suas ou importe material licenciado.
+- **Aulas teóricas** (`/api/aulas-teoricas`): agendamento, cancelamento e lista de presença; `/api/alunos/{id}/horas-teoricas` compara horas assistidas com o mínimo da categoria (configurável).
+- **Simulados** (`/api/simulados`): sorteio de questões conforme a configuração (quantidade, tempo, acertos mínimos); tempo controlado no servidor (tolerância de 30 s); gabarito só aparece após finalizar; histórico do aluno e visão da secretaria em `/api/alunos/{id}/simulados`.
+- Testes: `SimuladoServiceTest`. Migração `V6__teorico_simulados.sql`.
+- App: aba **Teórico** (aluno faz simulado com cronômetro; equipe gerencia questões e aulas).

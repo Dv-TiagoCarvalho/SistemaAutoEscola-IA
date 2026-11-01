@@ -14,6 +14,7 @@ import '../features/configuracoes_page.dart';
 import '../features/inicio_page.dart';
 import '../features/login_page.dart';
 import '../features/shell.dart';
+import '../features/teorico_page.dart';
 import 'sessao.dart';
 
 /// Rotas e quais perfis podem abrir cada uma. O back-end valida de novo; isto só organiza a navegação.
@@ -32,6 +33,7 @@ const rotas = [
   Rota('/agenda', 'Agenda', Icons.calendar_month_outlined, {'ADMIN', 'SECRETARIA', 'INSTRUTOR', 'ALUNO'}),
   Rota('/financeiro', 'Financeiro', Icons.payments_outlined, {'ADMIN', 'SECRETARIA'}),
   Rota('/exames', 'Exames', Icons.fact_check_outlined, {'ADMIN', 'SECRETARIA'}),
+  Rota('/teorico', 'Teórico', Icons.quiz_outlined, {'ADMIN', 'SECRETARIA', 'ALUNO'}),
   Rota('/cadastros', 'Cadastros', Icons.folder_open_outlined, {'ADMIN', 'SECRETARIA'}),
   Rota('/configuracoes', 'Configurações', Icons.settings_outlined, {'ADMIN'}),
 ];
@@ -74,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/agenda', builder: (_, __) => const AgendaPage()),
           GoRoute(path: '/financeiro', builder: (_, __) => const FinanceiroPage()),
           GoRoute(path: '/exames', builder: (_, __) => const ExamesPage()),
+          GoRoute(path: '/teorico', builder: (_, __) => const TeoricoPage()),
           GoRoute(path: '/cadastros', builder: (_, __) => const CadastrosPage()),
           GoRoute(path: '/configuracoes', builder: (_, __) => const ConfiguracoesPage()),
         ],
