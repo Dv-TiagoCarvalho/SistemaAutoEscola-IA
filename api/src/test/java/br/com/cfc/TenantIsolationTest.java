@@ -159,6 +159,36 @@ class TenantIsolationTest {
                 .content("{\"processoId\":" + processoId + ",\"pacoteId\":" + pacoteId + ",\"numParcelas\":1}"))
                 .andExpect(status().isNotFound());
 
+        // ---- Agenda (Fase 3) ----
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/processos/" + processoId)
+                .header("Authorization", exemplo).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"renach\":\"MG123456789\",\"exameMedico\":\"APTO\",\"examePsicologico\":\"APTO\",\"situacao\":\"MATRICULADO\"}"))
+                .andExpect(status().isOk());
+        String instrutorId = criar("/api/instrutores", exemplo, "{\"nome\":\"Carlos\",\"categorias\":[\"B\"]}");
+        String veiculoId = criar("/api/veiculos", exemplo, "{\"placa\":\"abc-1d23\",\"modelo\":\"Onix\",\"ano\":2022,\"categoria\":\"B\"}");
+        String quando = LocalDate.now().plusDays(3) + "T10:00";
+        String corpoAula = "{\"matriculaId\":" + matriculaId + ",\"instrutorId\":" + instrutorId + ",\"veiculoId\":" + veiculoId + ",\"inicio\":\"" + quando + "\"}";
+        String aulaId = criar("/api/aulas", exemplo, corpoAula);
+        // mesmo horário: conflito
+        mvc.perform(post("/api/aulas").header("Authorization", exemplo).contentType(MediaType.APPLICATION_JSON).content(corpoAula))
+                .andExpect(status().isConflict());
+        JsonNode saldo = json.readTree(mvc.perform(get("/api/aulas/saldo?matriculaId=" + matriculaId).header("Authorization", exemplo))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertThat(saldo.get("saldo").asInt()).isEqualTo(19);
+        JsonNode agenda = json.readTree(mvc.perform(get("/api/aulas?de=" + LocalDate.now().plusDays(3) + "&ate=" + LocalDate.now().plusDays(3))
+                .header("Authorization", exemplo)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertThat(agenda).hasSize(1);
+        // outra autoescola não vê nem cancela
+        JsonNode agendaModelo = json.readTree(mvc.perform(get("/api/aulas?de=" + LocalDate.now().plusDays(3) + "&ate=" + LocalDate.now().plusDays(3))
+                .header("Authorization", modelo)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        assertThat(agendaModelo).isEmpty();
+        mvc.perform(post("/api/aulas/" + aulaId + "/cancelamento").header("Authorization", modelo)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"motivo\":\"x\"}")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/instrutores").header("Authorization", modelo)).andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$").isEmpty());
+        mvc.perform(post("/api/aulas/" + aulaId + "/cancelamento").header("Authorization", exemplo)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"motivo\":\"Chuva\"}")).andExpect(status().isOk());
+
         // Instrutor não acessa alunos
         mvc.perform(get("/api/alunos").header("Authorization", token("instrutor@cfcexemplo.com.br"))).andExpect(status().isForbidden());
     }

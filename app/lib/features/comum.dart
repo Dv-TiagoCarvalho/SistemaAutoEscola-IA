@@ -40,7 +40,7 @@ class ErroComRetry extends StatelessWidget {
 
 // ---------- Formulário genérico em diálogo ----------
 
-enum TipoCampo { texto, multilinha, numero, valor, data, senha, escolha }
+enum TipoCampo { texto, multilinha, numero, valor, data, hora, senha, escolha, multi }
 
 class Campo {
   const Campo(this.chave, this.rotulo,
@@ -48,9 +48,9 @@ class Campo {
   final String chave;
   final String rotulo;
   final TipoCampo tipo;
-  final String? inicial; // data: ISO yyyy-MM-dd
+  final String? inicial; // data: ISO yyyy-MM-dd; hora: HH:mm; multi: valores separados por vírgula
   final bool obrigatorio;
-  final Map<String, String>? opcoes; // escolha: valor -> rótulo
+  final Map<String, String>? opcoes; // escolha/multi: valor -> rótulo
   final List<TextInputFormatter>? formatters;
   final int? max;
 }
@@ -84,6 +84,7 @@ class _FormDialogState extends State<_FormDialog> {
   final _ctrl = <String, TextEditingController>{};
   final _escolhas = <String, String?>{};
   final _datas = <String, String?>{};
+  final _multi = <String, Set<String>>{};
   bool _salvando = false;
   ApiErro? _erro;
 
@@ -93,6 +94,11 @@ class _FormDialogState extends State<_FormDialog> {
     for (final c in widget.campos) {
       if (c.tipo == TipoCampo.escolha) {
         _escolhas[c.chave] = c.inicial;
+      } else if (c.tipo == TipoCampo.multi) {
+        _multi[c.chave] = {...?c.inicial?.split(',').where((e) => e.isNotEmpty)};
+      } else if (c.tipo == TipoCampo.hora) {
+        _datas[c.chave] = c.inicial;
+        _ctrl[c.chave] = TextEditingController(text: c.inicial ?? '');
       } else if (c.tipo == TipoCampo.data) {
         _datas[c.chave] = c.inicial;
         _ctrl[c.chave] = TextEditingController(text: c.inicial == null ? '' : Formatos.data(DateTime.parse(c.inicial!)));
@@ -127,6 +133,46 @@ class _FormDialogState extends State<_FormDialog> {
           items: [for (final e in c.opcoes!.entries) DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))],
           onChanged: (v) => setState(() => _escolhas[c.chave] = v),
           validator: (v) => c.obrigatorio && v == null ? 'Obrigatório.' : null,
+        );
+      case TipoCampo.multi:
+        return FormField<Set<String>>(
+          initialValue: _multi[c.chave],
+          validator: (_) => c.obrigatorio && _multi[c.chave]!.isEmpty ? 'Escolha ao menos uma opção.' : null,
+          builder: (st) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(c.rotulo, style: Theme.of(context).textTheme.bodySmall),
+            Wrap(spacing: 8, children: [
+              for (final e in c.opcoes!.entries)
+                FilterChip(
+                  label: Text(e.value),
+                  selected: _multi[c.chave]!.contains(e.key),
+                  onSelected: (v) => setState(() => v ? _multi[c.chave]!.add(e.key) : _multi[c.chave]!.remove(e.key)),
+                ),
+            ]),
+            if (st.hasError) Text(st.errorText!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            if (servidor != null) Text(servidor, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ]),
+        );
+      case TipoCampo.hora:
+        return TextFormField(
+          controller: _ctrl[c.chave],
+          readOnly: true,
+          decoration: InputDecoration(labelText: c.rotulo, errorText: servidor, suffixIcon: const Icon(Icons.schedule)),
+          validator: validar,
+          onTap: () async {
+            final atual = _datas[c.chave];
+            final t = await showTimePicker(
+              context: context,
+              initialTime: atual == null
+                  ? const TimeOfDay(hour: 8, minute: 0)
+                  : TimeOfDay(hour: int.parse(atual.substring(0, 2)), minute: int.parse(atual.substring(3, 5))),
+              builder: (ctx, w) => MediaQuery(data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true), child: w!),
+            );
+            if (t != null) {
+              final txt = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+              _datas[c.chave] = txt;
+              _ctrl[c.chave]!.text = txt;
+            }
+          },
         );
       case TipoCampo.data:
         return TextFormField(
@@ -170,7 +216,10 @@ class _FormDialogState extends State<_FormDialog> {
       switch (c.tipo) {
         case TipoCampo.escolha:
           valores[c.chave] = _escolhas[c.chave] ?? '';
+        case TipoCampo.multi:
+          valores[c.chave] = (_multi[c.chave]!.toList()..sort()).join(',');
         case TipoCampo.data:
+        case TipoCampo.hora:
           valores[c.chave] = _datas[c.chave] ?? '';
         case TipoCampo.valor:
           final n = lerValor(_ctrl[c.chave]!.text);

@@ -493,8 +493,14 @@ class _MatriculaDialog extends ConsumerStatefulWidget {
 
 class _MatriculaDialogState extends ConsumerState<_MatriculaDialog> {
   late Future<Map<String, dynamic>> _f = _carregar();
-  Future<Map<String, dynamic>> _carregar() async =>
-      (await ref.read(apiProvider).get('/matriculas/${widget.id}')) as Map<String, dynamic>;
+  Future<Map<String, dynamic>> _carregar() async {
+    final api = ref.read(apiProvider);
+    final d = Map<String, dynamic>.from(await api.get('/matriculas/${widget.id}') as Map);
+    try {
+      d['saldo'] = await api.get('/aulas/saldo', query: {'matriculaId': widget.id});
+    } catch (_) {}
+    return d;
+  }
   void _recarregar() => setState(() => _f = _carregar());
 
   @override
@@ -517,6 +523,8 @@ class _MatriculaDialogState extends ConsumerState<_MatriculaDialog> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('${m['pacoteNome']} (${m['categoria']})', style: Theme.of(context).textTheme.titleMedium),
                 Text('${Formatos.statusMatricula(m['status'] as String)} · ${d['aulasContratadas']} aulas práticas'),
+                if (d['saldo'] != null)
+                  Text('Aulas usadas/agendadas: ${d['saldo']['consumidas']} · saldo: ${d['saldo']['saldo']}'),
                 Text('Total: ${Formatos.moeda(m['valorTotal'] as num)}'
                     '${(m['desconto'] as num? ?? 0) > 0 ? ' (desconto ${Formatos.moeda(m['desconto'] as num)})' : ''}'),
                 if (m['motivoCancelamento'] != null) Text('Motivo do cancelamento: ${m['motivoCancelamento']}'),

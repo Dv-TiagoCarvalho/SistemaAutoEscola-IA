@@ -78,3 +78,17 @@ Arquivos ficam em `STORAGE_PATH` (volume `uploads` no Docker); a interface `Stor
 **Testar:** `cd api && mvn test` (precisa de Docker para o teste com Testcontainers) e `cd app && flutter test`.
 Depois `docker compose up --build`, entre como `admin@cfcexemplo.com.br` / `Senha@123` (com `SEED_EXEMPLO=true`) e use Alunos > Novo aluno
 > Processos > Matricular > Contrato (PDF). Swagger em `/swagger-ui.html`.
+
+## Fase 3 — Agenda e registro de aulas
+
+**Back-end:** instrutores (com acesso opcional ao app), veículos, aulas práticas e registro da aula.
+Regras da agenda (`AulaService`): sem conflito de instrutor, veículo ou aluno; a aula consome um crédito da matrícula
+(pacote + avulsas); duração, antecedência de agendamento/cancelamento, limite diário e cobrança de falta vêm da
+configuração da autoescola; categoria do veículo e do instrutor precisam bater com a do processo (AB aceita veículo A ou B);
+exames médico e psicológico APTOS e LADV válida na data (a exigência de exames é a coluna `exigir_exames_aulas`, ligada por padrão).
+Falta só consome crédito quando a autoescola **não** cobra falta; cancelamento tardio gera título de falta se houver cobrança.
+O instrutor registra a aula (realizada/falta, km, conteúdo, nota) só das próprias aulas; o aluno só cancela as próprias.
+
+**App:** aba Agenda (dia a dia para a equipe; "próximas aulas" para instrutor e aluno) e aba Cadastros (pacotes, instrutores, veículos e equipe).
+
+**Pendente na Fase 3:** a opção "exigir exames" ainda não aparece na tela de Configurações (só no banco).

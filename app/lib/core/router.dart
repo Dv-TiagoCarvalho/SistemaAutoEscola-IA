@@ -6,12 +6,12 @@ import '../features/aluno_detalhe_page.dart';
 import '../features/aluno_form_page.dart';
 import '../features/alunos_page.dart';
 import '../features/autoescolas_page.dart';
-import '../features/pacotes_page.dart';
+import '../features/agenda_page.dart';
+import '../features/cadastros_page.dart';
 import '../features/configuracoes_page.dart';
 import '../features/inicio_page.dart';
 import '../features/login_page.dart';
 import '../features/shell.dart';
-import '../features/usuarios_page.dart';
 import 'sessao.dart';
 
 /// Rotas e quais perfis podem abrir cada uma. O back-end valida de novo; isto só organiza a navegação.
@@ -27,8 +27,8 @@ const rotas = [
   Rota('/inicio', 'Início', Icons.home_outlined, {'ADMIN', 'SECRETARIA', 'INSTRUTOR', 'ALUNO'}),
   Rota('/autoescolas', 'Autoescolas', Icons.business_outlined, {'SUPER_ADMIN'}),
   Rota('/alunos', 'Alunos', Icons.school_outlined, {'ADMIN', 'SECRETARIA'}),
-  Rota('/pacotes', 'Pacotes', Icons.inventory_2_outlined, {'ADMIN', 'SECRETARIA'}),
-  Rota('/usuarios', 'Equipe', Icons.group_outlined, {'ADMIN'}),
+  Rota('/agenda', 'Agenda', Icons.calendar_month_outlined, {'ADMIN', 'SECRETARIA', 'INSTRUTOR', 'ALUNO'}),
+  Rota('/cadastros', 'Cadastros', Icons.folder_open_outlined, {'ADMIN', 'SECRETARIA'}),
   Rota('/configuracoes', 'Configurações', Icons.settings_outlined, {'ADMIN'}),
 ];
 
@@ -67,8 +67,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/alunos/novo', builder: (_, __) => const AlunoFormPage()),
           GoRoute(path: '/alunos/:id', builder: (_, s) => AlunoDetalhePage(id: int.parse(s.pathParameters['id']!))),
           GoRoute(path: '/alunos/:id/editar', builder: (_, s) => AlunoFormPage(id: int.parse(s.pathParameters['id']!))),
-          GoRoute(path: '/pacotes', builder: (_, __) => const PacotesPage()),
-          GoRoute(path: '/usuarios', builder: (_, __) => const UsuariosPage()),
+          GoRoute(path: '/agenda', builder: (_, __) => const AgendaPage()),
+          GoRoute(path: '/cadastros', builder: (_, __) => const CadastrosPage()),
           GoRoute(path: '/configuracoes', builder: (_, __) => const ConfiguracoesPage()),
         ],
       ),
