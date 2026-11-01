@@ -45,7 +45,7 @@ public class InstrutorService {
             if (req.senha() == null || req.senha().isBlank()) {
                 throw new RegraNegocioException("Informe a senha de acesso do instrutor.");
             }
-            Usuario u = usuarioService.novoUsuario(autoescolaId, req.nome(), req.email(), req.senha(), Perfil.INSTRUTOR);
+            Usuario u = usuarioService.novoUsuario(autoescolaId, req.nome().trim(), req.email(), req.senha(), Perfil.INSTRUTOR);
             i.setUsuarioId(u.getId());
         }
         i = repository.save(i);
