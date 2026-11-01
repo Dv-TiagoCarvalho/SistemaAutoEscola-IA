@@ -1,7 +1,10 @@
 package br.com.cfc.agenda;
 
+import br.com.cfc.agenda.AgendaDtos.ManutencaoRequest;
+import br.com.cfc.agenda.AgendaDtos.ManutencaoResponse;
 import br.com.cfc.agenda.AgendaDtos.VeiculoRequest;
 import br.com.cfc.agenda.AgendaDtos.VeiculoResponse;
+import br.com.cfc.autoescola.ConfiguracaoService;
 import br.com.cfc.shared.audit.AcaoAuditoria;
 import br.com.cfc.shared.audit.AuditService;
 import br.com.cfc.shared.domain.Tenants;
@@ -16,17 +19,23 @@ import java.util.List;
 public class VeiculoService {
 
     private final VeiculoRepository repository;
+    private final ManutencaoRepository manutencaoRepository;
+    private final ConfiguracaoService configuracaoService;
     private final AuditService auditService;
 
-    public VeiculoService(VeiculoRepository repository, AuditService auditService) {
+    public VeiculoService(VeiculoRepository repository, ManutencaoRepository manutencaoRepository,
+                          ConfiguracaoService configuracaoService, AuditService auditService) {
         this.repository = repository;
+        this.manutencaoRepository = manutencaoRepository;
+        this.configuracaoService = configuracaoService;
         this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
     public List<VeiculoResponse> listar(boolean incluirInativos) {
         SecurityUtils.autoescolaIdObrigatorio();
-        return repository.listar(incluirInativos).stream().map(VeiculoResponse::de).toList();
+        var hoje = configuracaoService.hoje();
+        return repository.listar(incluirInativos).stream().map(v -> VeiculoResponse.de(v, hoje)).toList();
     }
 
     @Transactional
@@ -82,5 +91,39 @@ public class VeiculoService {
         v.setModelo(req.modelo().trim());
         v.setAno(req.ano());
         v.setCategoria(req.categoria());
+        if (req.kmAtual() != null) {
+            v.setKmAtual(req.kmAtual());
+        }
+        v.setLicenciamentoValidade(req.licenciamentoValidade());
+        v.setSeguroValidade(req.seguroValidade());
+        v.setProximaRevisaoKm(req.proximaRevisaoKm());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ManutencaoResponse> manutencoes(Long veiculoId) {
+        exigir(veiculoId);
+        return manutencaoRepository.findByVeiculoIdOrderByDataDescIdDesc(veiculoId).stream().map(ManutencaoResponse::de).toList();
+    }
+
+    /** Registra uma manutenção; se o km informado for maior que o atual, atualiza o hodômetro do veículo. */
+    @Transactional
+    public ManutencaoResponse registrarManutencao(Long veiculoId, ManutencaoRequest req) {
+        Veiculo v = exigir(veiculoId);
+        if (req.data().isAfter(configuracaoService.hoje())) {
+            throw new br.com.cfc.shared.exception.RegraNegocioException("A data da manutenção não pode estar no futuro.");
+        }
+        ManutencaoVeiculo m = new ManutencaoVeiculo();
+        m.setVeiculoId(veiculoId);
+        m.setData(req.data());
+        m.setDescricao(req.descricao().trim());
+        m.setKm(req.km());
+        m.setValor(req.valor());
+        m = manutencaoRepository.save(m);
+        if (req.km() != null && req.km() > v.getKmAtual()) {
+            v.setKmAtual(req.km());
+        }
+        var r = ManutencaoResponse.de(m);
+        auditService.registrar("manutencao_veiculo", m.getId(), AcaoAuditoria.CRIACAO, null, r);
+        return r;
     }
 }

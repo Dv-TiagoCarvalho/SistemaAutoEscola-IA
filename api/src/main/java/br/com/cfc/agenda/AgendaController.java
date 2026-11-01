@@ -90,6 +90,19 @@ public class AgendaController {
         return veiculos.alterarStatus(id, req.ativo());
     }
 
+    @GetMapping("/veiculos/{id}/manutencoes")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETARIA')")
+    public List<ManutencaoResponse> manutencoes(@PathVariable Long id) {
+        return veiculos.manutencoes(id);
+    }
+
+    @PostMapping("/veiculos/{id}/manutencoes")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ManutencaoResponse registrarManutencao(@PathVariable Long id, @Valid @RequestBody ManutencaoRequest req) {
+        return veiculos.registrarManutencao(id, req);
+    }
+
     // ----- Aulas -----
 
     @Operation(summary = "Agenda da autoescola. Instrutor e aluno enxergam só as próprias aulas.")

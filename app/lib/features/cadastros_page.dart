@@ -154,12 +154,76 @@ class _VeiculosPageState extends ConsumerState<VeiculosPage> {
               obrigatorio: true,
               inicial: v?['categoria'] as String?,
               opcoes: {for (final c in Formatos.categorias) c: c}),
+          Campo('km', 'Km atual', tipo: TipoCampo.numero, inicial: v == null ? null : '${v['kmAtual']}', max: 7),
+          Campo('lic', 'Validade do licenciamento', tipo: TipoCampo.data, inicial: v?['licenciamentoValidade'] as String?),
+          Campo('seg', 'Validade do seguro', tipo: TipoCampo.data, inicial: v?['seguroValidade'] as String?),
+          Campo('rev', 'Próxima revisão (km)', tipo: TipoCampo.numero, inicial: v?['proximaRevisaoKm'] == null ? null : '${v?['proximaRevisaoKm']}', max: 7),
         ],
         enviar: (d) async {
-          final corpo = {'placa': d['placa'], 'modelo': d['modelo'], 'ano': int.tryParse(d['ano']!), 'categoria': d['categoria']};
+          final corpo = {
+            'placa': d['placa'],
+            'modelo': d['modelo'],
+            'ano': int.tryParse(d['ano']!),
+            'categoria': d['categoria'],
+            'kmAtual': int.tryParse(d['km']!),
+            'licenciamentoValidade': d['lic']!.isEmpty ? null : d['lic'],
+            'seguroValidade': d['seg']!.isEmpty ? null : d['seg'],
+            'proximaRevisaoKm': int.tryParse(d['rev']!),
+          };
           v == null ? await api.post('/veiculos', corpo) : await api.put('/veiculos/${v['id']}', corpo);
         });
     if (ok) _recarregar();
+  }
+
+  Future<void> _manutencoes(Map<String, dynamic> v) async {
+    final api = ref.read(apiProvider);
+    final admin = ref.read(sessaoProvider).valueOrNull?.perfil == 'ADMIN';
+    try {
+      final itens = ((await api.get('/veiculos/${v['id']}/manutencoes')) as List).cast<Map<String, dynamic>>();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Manutenções · ${v['placa']}'),
+          content: SizedBox(
+            width: 420,
+            child: itens.isEmpty
+                ? const Text('Nenhuma manutenção registrada.')
+                : ListView(shrinkWrap: true, children: [
+                    for (final m in itens)
+                      ListTile(
+                        dense: true,
+                        title: Text('${m['descricao']} · ${Formatos.moeda(m['valor'] as num)}'),
+                        subtitle: Text('${Formatos.data(DateTime.parse(m['data'] as String))}${m['km'] != null ? ' · ${m['km']} km' : ''}'),
+                      ),
+                  ]),
+          ),
+          actions: [
+            if (admin)
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final ok = await abrirForm(context,
+                      titulo: 'Registrar manutenção',
+                      campos: [
+                        Campo('data', 'Data', tipo: TipoCampo.data, obrigatorio: true, inicial: DateTime.now().toIso8601String().substring(0, 10)),
+                        const Campo('descricao', 'O que foi feito', obrigatorio: true, max: 200),
+                        const Campo('km', 'Km do veículo', tipo: TipoCampo.numero, max: 7),
+                        const Campo('valor', 'Valor (R\$)', tipo: TipoCampo.valor, obrigatorio: true, inicial: '0'),
+                      ],
+                      enviar: (d) async => api.post('/veiculos/${v['id']}/manutencoes',
+                          {'data': d['data'], 'descricao': d['descricao'], 'km': int.tryParse(d['km']!), 'valor': num.tryParse(d['valor']!)}));
+                  if (ok) _recarregar();
+                },
+                child: const Text('Registrar nova'),
+              ),
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fechar')),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) mostrarErro(context, e);
+    }
   }
 
   Future<void> _alternar(Map<String, dynamic> v) async {
@@ -197,8 +261,15 @@ class _VeiculosPageState extends ConsumerState<VeiculosPage> {
                 return ListTile(
                   leading: CircleAvatar(child: Text(v['categoria'] as String)),
                   title: Text('${v['placa']} · ${v['modelo']}'),
-                  subtitle: Text('${v['ano']}${ativo ? '' : ' · inativo'}'),
-                  trailing: admin ? Switch(value: ativo, onChanged: (_) => _alternar(v)) : null,
+                  subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${v['ano']} · ${v['kmAtual']} km${ativo ? '' : ' · inativo'}'),
+                    for (final al in (v['alertas'] as List? ?? []))
+                      Text('⚠ $al', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ]),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    IconButton(tooltip: 'Manutenções', icon: const Icon(Icons.build_outlined), onPressed: () => _manutencoes(v)),
+                    if (admin) Switch(value: ativo, onChanged: (_) => _alternar(v)),
+                  ]),
                   onTap: admin ? () => _form(v) : null,
                 );
               },

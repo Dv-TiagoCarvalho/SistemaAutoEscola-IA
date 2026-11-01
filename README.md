@@ -99,3 +99,10 @@ Baixa de títulos (forma, data, multa/juros e desconto), recibo numerado em PDF 
 estorno (ADMIN; reabre o título e mantém o recibo marcado como estornado), cancelamento de título, títulos avulsos,
 despesas (ADMIN) e resumo com fluxo dos últimos 6 meses. `PaymentProvider` é a interface para integrar gateway de
 pagamento (hoje só existe o `ManualPaymentProvider`, que registra o recebimento no balcão). O recibo não é nota fiscal.
+
+## Fase 5 — Exames e frota
+
+Exames teórico/prático por processo: prático só depois de aprovado no teórico, contagem automática de tentativas, aprovação
+no prático encerra o processo, reprovação volta para "Em aulas". Resultado lançado manualmente (sem integração com órgão de trânsito).
+Frota: validade de licenciamento e seguro, revisão por km, histórico de manutenção e alertas; o km do veículo sobe sozinho
+quando o instrutor registra a aula ou uma manutenção. Pendente: disponibilidade semanal do instrutor.

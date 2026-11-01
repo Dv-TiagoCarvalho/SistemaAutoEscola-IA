@@ -32,6 +32,18 @@ public class Veiculo extends TenantEntity {
     @Column(nullable = false, length = 5)
     private Categoria categoria;
 
+    @Column(name = "km_atual", nullable = false)
+    private int kmAtual;
+
+    @Column(name = "licenciamento_validade")
+    private java.time.LocalDate licenciamentoValidade;
+
+    @Column(name = "seguro_validade")
+    private java.time.LocalDate seguroValidade;
+
+    @Column(name = "proxima_revisao_km")
+    private Integer proximaRevisaoKm;
+
     @Column(nullable = false)
     private boolean ativo = true;
 }

@@ -49,12 +49,56 @@ public final class AgendaDtos {
             @NotBlank(message = "Informe a placa.") @Pattern(regexp = "^[A-Za-z]{3}-?[0-9][A-Za-z0-9][0-9]{2}$", message = "Placa inválida.") String placa,
             @NotBlank(message = "Informe o modelo.") @Size(max = 80, message = "Modelo com no máximo 80 caracteres.") String modelo,
             @NotNull(message = "Informe o ano.") @Min(value = 1980, message = "Ano inválido.") @Max(value = 2100, message = "Ano inválido.") Integer ano,
-            @NotNull(message = "Informe a categoria.") Categoria categoria) {
+            @NotNull(message = "Informe a categoria.") Categoria categoria,
+            @Min(value = 0, message = "Km inválido.") @Max(value = 9999999, message = "Km inválido.") Integer kmAtual,
+            LocalDate licenciamentoValidade,
+            LocalDate seguroValidade,
+            @Min(value = 0, message = "Km inválido.") @Max(value = 9999999, message = "Km inválido.") Integer proximaRevisaoKm) {
     }
 
-    public record VeiculoResponse(Long id, String placa, String modelo, int ano, Categoria categoria, boolean ativo) {
+    public record VeiculoResponse(Long id, String placa, String modelo, int ano, Categoria categoria, boolean ativo,
+                                  int kmAtual, LocalDate licenciamentoValidade, LocalDate seguroValidade,
+                                  Integer proximaRevisaoKm, List<String> alertas) {
         public static VeiculoResponse de(Veiculo v) {
-            return new VeiculoResponse(v.getId(), v.getPlaca(), v.getModelo(), v.getAno(), v.getCategoria(), v.isAtivo());
+            return de(v, null);
+        }
+
+        public static VeiculoResponse de(Veiculo v, LocalDate hoje) {
+            List<String> alertas = new java.util.ArrayList<>();
+            if (hoje != null) {
+                alerta(alertas, "Licenciamento", v.getLicenciamentoValidade(), hoje);
+                alerta(alertas, "Seguro", v.getSeguroValidade(), hoje);
+                if (v.getProximaRevisaoKm() != null && v.getKmAtual() >= v.getProximaRevisaoKm() - 500) {
+                    alertas.add(v.getKmAtual() >= v.getProximaRevisaoKm() ? "Revisão atrasada (km)." : "Revisão próxima (km).");
+                }
+            }
+            return new VeiculoResponse(v.getId(), v.getPlaca(), v.getModelo(), v.getAno(), v.getCategoria(), v.isAtivo(),
+                    v.getKmAtual(), v.getLicenciamentoValidade(), v.getSeguroValidade(), v.getProximaRevisaoKm(), alertas);
+        }
+
+        private static void alerta(List<String> alertas, String nome, LocalDate validade, LocalDate hoje) {
+            if (validade == null) {
+                return;
+            }
+            long dias = java.time.temporal.ChronoUnit.DAYS.between(hoje, validade);
+            if (dias < 0) {
+                alertas.add(nome + " vencido.");
+            } else if (dias <= 30) {
+                alertas.add(nome + " vence em " + dias + " dia(s).");
+            }
+        }
+    }
+
+    public record ManutencaoRequest(
+            @NotNull(message = "Informe a data.") LocalDate data,
+            @NotBlank(message = "Informe a descrição.") @Size(max = 200, message = "Descrição com no máximo 200 caracteres.") String descricao,
+            @Min(value = 0, message = "Km inválido.") @Max(value = 9999999, message = "Km inválido.") Integer km,
+            @NotNull(message = "Informe o valor.") @jakarta.validation.constraints.DecimalMin(value = "0.00", message = "Valor inválido.") @jakarta.validation.constraints.Digits(integer = 8, fraction = 2, message = "Valor inválido.") java.math.BigDecimal valor) {
+    }
+
+    public record ManutencaoResponse(Long id, Long veiculoId, LocalDate data, String descricao, Integer km, java.math.BigDecimal valor) {
+        public static ManutencaoResponse de(ManutencaoVeiculo m) {
+            return new ManutencaoResponse(m.getId(), m.getVeiculoId(), m.getData(), m.getDescricao(), m.getKm(), m.getValor());
         }
     }
 

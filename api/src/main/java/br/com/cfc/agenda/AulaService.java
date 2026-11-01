@@ -297,6 +297,13 @@ public class AulaService {
         a.setNota(req.nota());
         a.setRegistradaEm(agora);
         a.setRegistradaPor(usuario.id());
+        if (req.kmFinal() != null) {
+            veiculoRepository.findById(a.getVeiculoId()).ifPresent(v -> {
+                if (req.kmFinal() > v.getKmAtual()) {
+                    v.setKmAtual(req.kmFinal());
+                }
+            });
+        }
 
         if (req.resultado() == StatusAula.FALTA) {
             gerarTituloDeFalta(a, cfg, "Falta");
