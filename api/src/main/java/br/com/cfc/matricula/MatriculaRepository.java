@@ -3,10 +3,17 @@ package br.com.cfc.matricula;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
+
+    /** Trava a matrícula para conferir o saldo de aulas sem corrida entre dois agendamentos. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select m from Matricula m where m.id = :id")
+    java.util.Optional<Matricula> buscarComLock(@Param("id") Long id);
 
     boolean existsByProcessoIdAndStatus(Long processoId, StatusMatricula status);
 

@@ -55,6 +55,10 @@ public class ConfiguracaoAutoescola {
     @Column(name = "simulado_acertos_minimos", nullable = false)
     private int simuladoAcertosMinimos = 21;
 
+    /** Se ligado, só agenda aula prática para aluno com exames médico e psicológico APTOS. */
+    @Column(name = "exigir_exames_aulas", nullable = false)
+    private boolean exigirExamesParaAulas = true;
+
     @Column(name = "fuso_horario", nullable = false, length = 40)
     private String fusoHorario = "America/Sao_Paulo";
 

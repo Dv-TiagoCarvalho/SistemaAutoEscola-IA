@@ -150,6 +150,19 @@ public class UsuarioService {
         }
     }
 
+    /** Usado pelo cadastro de instrutor: instrutor inativo não consegue entrar no app. */
+    @Transactional
+    public void definirAtivoDeInstrutor(Long usuarioId, boolean ativo) {
+        Usuario usuario = carregarDaAutoescola(usuarioId);
+        if (usuario.getPerfil() != Perfil.INSTRUTOR) {
+            throw new RegraNegocioException("O usuário informado não é um instrutor.");
+        }
+        usuario.setAtivo(ativo);
+        if (!ativo) {
+            refreshTokenRepository.revogarTodosDoUsuario(usuario.getId(), clock.instant());
+        }
+    }
+
     private Usuario carregarAluno(Long usuarioId) {
         Usuario usuario = carregarDaAutoescola(usuarioId);
         if (usuario.getPerfil() != Perfil.ALUNO) {

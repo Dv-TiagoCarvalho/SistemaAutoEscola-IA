@@ -9,6 +9,9 @@ import org.springframework.data.repository.query.Param;
 /** Filtrado automaticamente pela autoescola do usuário logado (TenantEntity). */
 public interface AlunoRepository extends JpaRepository<Aluno, Long> {
 
+    java.util.Optional<Aluno> findByUsuarioId(Long usuarioId);
+
+
     boolean existsByCpf(String cpf);
 
     boolean existsByCpfAndIdNot(String cpf, Long id);
