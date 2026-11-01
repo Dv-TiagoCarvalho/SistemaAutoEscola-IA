@@ -1,0 +1,13 @@
+.env
+api/target/
+app/.dart_tool/
+app/build/
+app/android/
+app/ios/
+app/linux/
+app/macos/
+app/windows/
+.idea/
+.vscode/
+*.iml
+.DS_Store

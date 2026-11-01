@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: autoescola-api
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/autoescola?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8}
+    username: ${DB_USER:autoescola}
+    password: ${DB_PASSWORD:autoescola}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        type:
+          # Instant -> DATETIME(6) gravado em UTC (combina com as migrations).
+          preferred_instant_jdbc_type: TIMESTAMP
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    time-zone: UTC
+    default-property-inclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  security:
+    # Segredo do JWT: no mínimo 32 caracteres. Em produção, SEMPRE defina JWT_SECRET.
+    jwt-secret: ${JWT_SECRET:troque-este-segredo-em-producao-com-32-caracteres-ou-mais}
+    access-token-minutes: ${JWT_ACCESS_MINUTES:15}
+    refresh-token-days: ${JWT_REFRESH_DAYS:30}
+    cors-origins: ${CORS_ORIGINS:http://localhost:8081,http://localhost:5000}
+    login:
+      max-falhas: ${LOGIN_MAX_FALHAS:5}
+      bloqueio-minutos: ${LOGIN_BLOQUEIO_MINUTOS:15}
+      max-tentativas-por-minuto-ip: ${LOGIN_MAX_TENTATIVAS_IP:20}
+  bootstrap:
+    # Cria o SUPER_ADMIN da plataforma na primeira subida, se não existir nenhum.
+    superadmin-email: ${SUPERADMIN_EMAIL:}
+    superadmin-senha: ${SUPERADMIN_SENHA:}
+    # Cria autoescolas e usuários de exemplo. NUNCA ligue em produção.
+    seed-exemplo: ${SEED_EXEMPLO:false}

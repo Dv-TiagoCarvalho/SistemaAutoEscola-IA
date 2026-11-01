@@ -1,0 +1,67 @@
+# Autoescola SaaS
+
+Sistema de gestão para autoescolas (CFCs), multi-tenant: várias autoescolas no mesmo sistema, cada uma vendo só os próprios dados.
+
+- **api/**: Java 21, Spring Boot 3.5, Spring Security (JWT + refresh token), JPA, MySQL 8, Flyway, Swagger
+- **app/**: Flutter (Android, iOS e Web/PWA), Riverpod, go_router, Dio
+
+## Rodar tudo com Docker
+
+```bash
+cp .env.example .env        # ajuste as senhas
+docker compose up --build
+```
+
+- App web: http://localhost:8081
+- Swagger: http://localhost:8080/swagger-ui.html
+
+Usuários criados com `SEED_EXEMPLO=true` (senha `Senha@123` para todos):
+
+| E-mail | Perfil | Autoescola |
+|---|---|---|
+| super@cfc.local | SUPER_ADMIN | (plataforma) |
+| admin@cfcexemplo.com.br | ADMIN | CFC Exemplo |
+| secretaria@cfcexemplo.com.br | SECRETARIA | CFC Exemplo |
+| instrutor@cfcexemplo.com.br | INSTRUTOR | CFC Exemplo |
+| admin@cfcmodelo.com.br | ADMIN | CFC Modelo |
+
+## Desenvolvimento
+
+**API** (precisa de um MySQL rodando, ex.: `docker compose up mysql`):
+
+```bash
+cd api
+mvn test                     # testes; o de integração usa Docker (Testcontainers) e é pulado sem Docker
+SEED_EXEMPLO=true SUPERADMIN_EMAIL=super@cfc.local SUPERADMIN_SENHA=Senha@123 \
+DB_PASSWORD=<senha do .env> mvn spring-boot:run
+```
+
+**App:**
+
+```bash
+cd app
+flutter create . --platforms=android,ios,web --org br.com.cfc   # só na 1ª vez: gera as pastas de plataforma
+flutter pub get
+flutter test
+flutter run -d chrome --dart-define=API_URL=http://localhost:8080
+flutter run -d <celular> --dart-define=API_URL=http://<ip-do-seu-mac>:8080
+```
+
+No emulador Android, use `http://10.0.2.2:8080`. Ao rodar fora do Docker, inclua a origem do Flutter web em `CORS_ORIGINS`
+(ex.: `flutter run -d chrome --web-port 5000` e `CORS_ORIGINS=http://localhost:5000`).
+
+## Multi-tenant
+
+- Toda entidade de negócio estende `TenantEntity`, que tem `autoescola_id` com `@TenantId` do Hibernate:
+  o filtro por autoescola é automático em consultas e inserts.
+- O tenant vem do JWT (`JwtAuthenticationFilter` → `TenantContext` → `TenantIdentifierResolver`).
+- SUPER_ADMIN usa o tenant "raiz" (enxerga tudo); requisição sem login usa um tenant inexistente (não enxerga nada).
+- **SQL nativo e JdbcTemplate não passam pelo filtro**: sempre filtre `autoescola_id` manualmente.
+- `usuario`, `autoescola` e `audit_log` não usam `@TenantId` (login e SUPER_ADMIN precisam enxergar além do tenant);
+  os services filtram explicitamente.
+
+## Regras legais
+
+Carga horária mínima e idade por categoria ficam na tabela `regra_categoria`, editável por autoescola.
+Os valores iniciais são só ponto de partida: a Resolução Contran 1.020/2025 mudou as exigências e o tema
+ainda está em discussão. Cada autoescola deve conferir os valores vigentes.

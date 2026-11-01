@@ -1,0 +1,18 @@
+{
+  "name": "Autoescola",
+  "short_name": "Autoescola",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#1E5AA8",
+  "description": "Gestão da autoescola: agenda, aulas, alunos e financeiro.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "lang": "pt-BR",
+  "icons": [
+    {"src": "icons/Icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/Icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/Icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
