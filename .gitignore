@@ -11,3 +11,5 @@ app/windows/
 .vscode/
 *.iml
 .DS_Store
+uploads/
+api/uploads/
