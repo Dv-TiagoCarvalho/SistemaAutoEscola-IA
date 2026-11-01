@@ -28,4 +28,38 @@ class Formatos {
         'ALUNO': 'Aluno',
       }[p] ??
       p;
+
+  static const categorias = ['ACC', 'A', 'B', 'AB', 'C', 'D', 'E'];
+
+  static String _de(Map<String, String> m, String? v) => v == null ? '-' : (m[v] ?? v);
+
+  static String situacao(String? v) => _de(const {
+        'MATRICULADO': 'Matriculado',
+        'EM_AULAS': 'Em aulas',
+        'AGUARDANDO_EXAME': 'Aguardando exame',
+        'APROVADO': 'Aprovado',
+        'DESISTENTE': 'Desistente',
+      }, v);
+  static String tipoProcesso(String? v) => _de(const {
+        'PRIMEIRA_HABILITACAO': 'Primeira habilitação',
+        'ADICAO_CATEGORIA': 'Adição de categoria',
+        'MUDANCA_CATEGORIA': 'Mudança de categoria',
+      }, v);
+  static String statusExame(String? v) => _de(const {'PENDENTE': 'Pendente', 'APTO': 'Apto', 'INAPTO': 'Inapto'}, v);
+  static String tipoDocumento(String? v) => _de(const {
+        'FOTO': 'Foto',
+        'RG': 'RG',
+        'COMPROVANTE_RESIDENCIA': 'Comprovante de residência',
+        'OUTRO': 'Outro',
+      }, v);
+  static String statusMatricula(String? v) =>
+      _de(const {'ATIVA': 'Ativa', 'CONCLUIDA': 'Concluída', 'CANCELADA': 'Cancelada'}, v);
+  static String statusTitulo(String? v) => _de(const {'ABERTO': 'Em aberto', 'PAGO': 'Pago', 'CANCELADO': 'Cancelado'}, v);
+
+  static String telefone(String? v) {
+    if (v == null) return '-';
+    if (v.length == 11) return '(${v.substring(0, 2)}) ${v.substring(2, 7)}-${v.substring(7)}';
+    if (v.length == 10) return '(${v.substring(0, 2)}) ${v.substring(2, 6)}-${v.substring(6)}';
+    return v;
+  }
 }

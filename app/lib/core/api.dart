@@ -149,6 +149,19 @@ class Api {
   Future<dynamic> post(String path, Object? body) => _req(() => dio.post(path, data: body));
   Future<dynamic> put(String path, Object? body) => _req(() => dio.put(path, data: body));
   Future<dynamic> patch(String path, Object? body) => _req(() => dio.patch(path, data: body));
+  Future<dynamic> delete(String path) => _req(() => dio.delete(path));
+  Future<dynamic> postForm(String path, FormData form) =>
+      _req(() => dio.post(path, data: form, options: Options(contentType: Headers.multipartFormDataContentType)));
+
+  /// Baixa um arquivo (PDF, imagem) como bytes.
+  Future<List<int>> baixar(String path) async {
+    try {
+      final r = await dio.get<List<int>>(path, options: Options(responseType: ResponseType.bytes));
+      return r.data ?? <int>[];
+    } catch (e) {
+      throw ApiErro.de(e);
+    }
+  }
 
   Future<dynamic> _req(Future<Response> Function() f) async {
     try {

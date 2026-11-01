@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.DateTimeException;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
@@ -42,6 +43,12 @@ public class ConfiguracaoService {
         Long autoescolaId = SecurityUtils.autoescolaIdObrigatorio();
         return configuracaoRepository.findById(autoescolaId)
                 .orElseThrow(() -> new NaoEncontradoException("Configurações da autoescola não encontradas."));
+    }
+
+    /** Data de hoje no fuso horário da autoescola (e não no do servidor). */
+    @Transactional(readOnly = true)
+    public LocalDate hoje() {
+        return LocalDate.now(clock.withZone(ZoneId.of(configuracaoAtual().getFusoHorario())));
     }
 
     @Transactional(readOnly = true)

@@ -65,3 +65,16 @@ No emulador Android, use `http://10.0.2.2:8080`. Ao rodar fora do Docker, inclua
 Carga horária mínima e idade por categoria ficam na tabela `regra_categoria`, editável por autoescola.
 Os valores iniciais são só ponto de partida: a Resolução Contran 1.020/2025 mudou as exigências e o tema
 ainda está em discussão. Cada autoescola deve conferir os valores vigentes.
+
+## Fase 2 — Alunos, matrículas e pacotes
+
+**Back-end** (`/api`): alunos (CPF validado, único por autoescola), processos de habilitação (idade mínima e categoria ativa
+vêm de `regra_categoria`; alertas de exame e LADV), documentos (JPEG/PNG/PDF até 10 MB, tipo conferido pelo conteúdo),
+consentimentos LGPD, pacotes, matrículas (parcelamento em centavos, créditos de aula, aula avulsa, cancelamento) e contrato em PDF.
+Arquivos ficam em `STORAGE_PATH` (volume `uploads` no Docker); a interface `StorageService` permite trocar por S3 depois.
+
+**Atenção:** as cláusulas do contrato são genéricas. Peça a um advogado para revisar antes de usar com clientes reais.
+
+**Testar:** `cd api && mvn test` (precisa de Docker para o teste com Testcontainers) e `cd app && flutter test`.
+Depois `docker compose up --build`, entre como `admin@cfcexemplo.com.br` / `Senha@123` (com `SEED_EXEMPLO=true`) e use Alunos > Novo aluno
+> Processos > Matricular > Contrato (PDF). Swagger em `/swagger-ui.html`.

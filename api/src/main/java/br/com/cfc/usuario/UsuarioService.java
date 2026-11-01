@@ -131,6 +131,33 @@ public class UsuarioService {
         auditService.registrar("usuario", usuario.getId(), AcaoAuditoria.SENHA, null, null);
     }
 
+    /** Usado pelo cadastro de aluno: redefine a senha de acesso do aluno ao app. */
+    @Transactional
+    public void redefinirSenhaDeAluno(Long usuarioId, String novaSenha) {
+        Usuario usuario = carregarAluno(usuarioId);
+        usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        refreshTokenRepository.revogarTodosDoUsuario(usuario.getId(), clock.instant());
+        auditService.registrar("usuario", usuario.getId(), AcaoAuditoria.SENHA, null, null);
+    }
+
+    /** Usado pelo cadastro de aluno: aluno inativo não consegue entrar no app. */
+    @Transactional
+    public void definirAtivoDeAluno(Long usuarioId, boolean ativo) {
+        Usuario usuario = carregarAluno(usuarioId);
+        usuario.setAtivo(ativo);
+        if (!ativo) {
+            refreshTokenRepository.revogarTodosDoUsuario(usuario.getId(), clock.instant());
+        }
+    }
+
+    private Usuario carregarAluno(Long usuarioId) {
+        Usuario usuario = carregarDaAutoescola(usuarioId);
+        if (usuario.getPerfil() != Perfil.ALUNO) {
+            throw new RegraNegocioException("O usuário informado não é um aluno.");
+        }
+        return usuario;
+    }
+
     private Usuario carregarDaAutoescola(Long id) {
         Long autoescolaId = SecurityUtils.autoescolaIdObrigatorio();
         return repository.findByIdAndAutoescolaId(id, autoescolaId)

@@ -50,6 +50,9 @@ springdoc:
     path: /v3/api-docs
 
 app:
+  storage:
+    # Pasta dos arquivos enviados (documentos dos alunos e contratos). Em Docker é um volume.
+    path: ${STORAGE_PATH:./uploads}
   security:
     # Segredo do JWT: no mínimo 32 caracteres. Em produção, SEMPRE defina JWT_SECRET.
     jwt-secret: ${JWT_SECRET:troque-este-segredo-em-producao-com-32-caracteres-ou-mais}

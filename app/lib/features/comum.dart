@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../core/api.dart';
+import '../core/documentos.dart';
+import '../core/formatos.dart';
 
 /// Mostra erro em snackbar.
 void mostrarErro(BuildContext context, Object e) {
@@ -32,4 +36,207 @@ class ErroComRetry extends StatelessWidget {
           OutlinedButton(onPressed: tentarDeNovo, child: const Text('Tentar de novo')),
         ]),
       );
+}
+
+// ---------- Formulário genérico em diálogo ----------
+
+enum TipoCampo { texto, multilinha, numero, valor, data, senha, escolha }
+
+class Campo {
+  const Campo(this.chave, this.rotulo,
+      {this.tipo = TipoCampo.texto, this.inicial, this.obrigatorio = false, this.opcoes, this.formatters, this.max});
+  final String chave;
+  final String rotulo;
+  final TipoCampo tipo;
+  final String? inicial; // data: ISO yyyy-MM-dd
+  final bool obrigatorio;
+  final Map<String, String>? opcoes; // escolha: valor -> rótulo
+  final List<TextInputFormatter>? formatters;
+  final int? max;
+}
+
+/// Abre um diálogo de formulário. [enviar] recebe os valores (data em ISO, valor com ponto decimal).
+/// Retorna true se salvou.
+Future<bool> abrirForm(BuildContext context,
+    {required String titulo,
+    required List<Campo> campos,
+    required Future<void> Function(Map<String, String> valores) enviar,
+    String rotuloBotao = 'Salvar'}) async {
+  final r = await showDialog<bool>(
+    context: context,
+    builder: (_) => _FormDialog(titulo: titulo, campos: campos, enviar: enviar, rotuloBotao: rotuloBotao),
+  );
+  return r == true;
+}
+
+class _FormDialog extends StatefulWidget {
+  const _FormDialog({required this.titulo, required this.campos, required this.enviar, required this.rotuloBotao});
+  final String titulo;
+  final List<Campo> campos;
+  final Future<void> Function(Map<String, String>) enviar;
+  final String rotuloBotao;
+  @override
+  State<_FormDialog> createState() => _FormDialogState();
+}
+
+class _FormDialogState extends State<_FormDialog> {
+  final _form = GlobalKey<FormState>();
+  final _ctrl = <String, TextEditingController>{};
+  final _escolhas = <String, String?>{};
+  final _datas = <String, String?>{};
+  bool _salvando = false;
+  ApiErro? _erro;
+
+  @override
+  void initState() {
+    super.initState();
+    for (final c in widget.campos) {
+      if (c.tipo == TipoCampo.escolha) {
+        _escolhas[c.chave] = c.inicial;
+      } else if (c.tipo == TipoCampo.data) {
+        _datas[c.chave] = c.inicial;
+        _ctrl[c.chave] = TextEditingController(text: c.inicial == null ? '' : Formatos.data(DateTime.parse(c.inicial!)));
+      } else {
+        _ctrl[c.chave] = TextEditingController(text: c.inicial ?? '');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _ctrl.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Widget _campo(Campo c) {
+    final servidor = _erro?.campos[c.chave];
+    String? validar(String? v) {
+      if (c.obrigatorio && (v == null || v.trim().isEmpty)) return 'Obrigatório.';
+      if (c.tipo == TipoCampo.valor && v != null && v.trim().isNotEmpty && lerValor(v) == null) return 'Valor inválido.';
+      return null;
+    }
+
+    switch (c.tipo) {
+      case TipoCampo.escolha:
+        return DropdownButtonFormField<String>(
+          value: _escolhas[c.chave],
+          isExpanded: true,
+          decoration: InputDecoration(labelText: c.rotulo, errorText: servidor),
+          items: [for (final e in c.opcoes!.entries) DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))],
+          onChanged: (v) => setState(() => _escolhas[c.chave] = v),
+          validator: (v) => c.obrigatorio && v == null ? 'Obrigatório.' : null,
+        );
+      case TipoCampo.data:
+        return TextFormField(
+          controller: _ctrl[c.chave],
+          readOnly: true,
+          decoration: InputDecoration(labelText: c.rotulo, errorText: servidor, suffixIcon: const Icon(Icons.calendar_today_outlined)),
+          validator: validar,
+          onTap: () async {
+            final atual = _datas[c.chave] == null ? DateTime.now() : DateTime.parse(_datas[c.chave]!);
+            final d = await showDatePicker(
+                context: context, initialDate: atual, firstDate: DateTime(1900), lastDate: DateTime(2100));
+            if (d != null) {
+              _datas[c.chave] = DateFormat('yyyy-MM-dd').format(d);
+              _ctrl[c.chave]!.text = Formatos.data(d);
+            }
+          },
+        );
+      default:
+        return TextFormField(
+          controller: _ctrl[c.chave],
+          obscureText: c.tipo == TipoCampo.senha,
+          maxLines: c.tipo == TipoCampo.multilinha ? 3 : 1,
+          maxLength: c.max,
+          keyboardType: switch (c.tipo) {
+            TipoCampo.numero => TextInputType.number,
+            TipoCampo.valor => const TextInputType.numberWithOptions(decimal: true),
+            _ => null,
+          },
+          inputFormatters: c.formatters ?? (c.tipo == TipoCampo.numero ? [FilteringTextInputFormatter.digitsOnly] : null),
+          decoration: InputDecoration(labelText: c.rotulo, errorText: servidor, counterText: ''),
+          validator: validar,
+        );
+    }
+  }
+
+  Future<void> _salvar() async {
+    setState(() => _erro = null);
+    if (!_form.currentState!.validate()) return;
+    final valores = <String, String>{};
+    for (final c in widget.campos) {
+      switch (c.tipo) {
+        case TipoCampo.escolha:
+          valores[c.chave] = _escolhas[c.chave] ?? '';
+        case TipoCampo.data:
+          valores[c.chave] = _datas[c.chave] ?? '';
+        case TipoCampo.valor:
+          final n = lerValor(_ctrl[c.chave]!.text);
+          valores[c.chave] = n == null ? '' : '$n';
+        default:
+          valores[c.chave] = _ctrl[c.chave]!.text.trim();
+      }
+    }
+    setState(() => _salvando = true);
+    try {
+      await widget.enviar(valores);
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _erro = ApiErro.de(e);
+          _salvando = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.titulo),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _form,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              for (final c in widget.campos) Padding(padding: const EdgeInsets.only(bottom: 8), child: _campo(c)),
+              if (_erro != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(_erro!.mensagem, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                ),
+            ]),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: _salvando ? null : () => Navigator.pop(context, false), child: const Text('Cancelar')),
+        FilledButton(
+          onPressed: _salvando ? null : _salvar,
+          child: _salvando
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : Text(widget.rotuloBotao),
+        ),
+      ],
+    );
+  }
+}
+
+Future<bool> confirmar(BuildContext context, String titulo, String texto, {String rotulo = 'Confirmar'}) async {
+  final r = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Text(titulo),
+      content: Text(texto),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Voltar')),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(rotulo)),
+      ],
+    ),
+  );
+  return r == true;
 }

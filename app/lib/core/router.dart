@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/aluno_detalhe_page.dart';
+import '../features/aluno_form_page.dart';
+import '../features/alunos_page.dart';
 import '../features/autoescolas_page.dart';
+import '../features/pacotes_page.dart';
 import '../features/configuracoes_page.dart';
 import '../features/inicio_page.dart';
 import '../features/login_page.dart';
@@ -22,6 +26,8 @@ class Rota {
 const rotas = [
   Rota('/inicio', 'Início', Icons.home_outlined, {'ADMIN', 'SECRETARIA', 'INSTRUTOR', 'ALUNO'}),
   Rota('/autoescolas', 'Autoescolas', Icons.business_outlined, {'SUPER_ADMIN'}),
+  Rota('/alunos', 'Alunos', Icons.school_outlined, {'ADMIN', 'SECRETARIA'}),
+  Rota('/pacotes', 'Pacotes', Icons.inventory_2_outlined, {'ADMIN', 'SECRETARIA'}),
   Rota('/usuarios', 'Equipe', Icons.group_outlined, {'ADMIN'}),
   Rota('/configuracoes', 'Configurações', Icons.settings_outlined, {'ADMIN'}),
 ];
@@ -57,6 +63,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/inicio', builder: (_, __) => const InicioPage()),
           GoRoute(path: '/autoescolas', builder: (_, __) => const AutoescolasPage()),
+          GoRoute(path: '/alunos', builder: (_, __) => const AlunosPage()),
+          GoRoute(path: '/alunos/novo', builder: (_, __) => const AlunoFormPage()),
+          GoRoute(path: '/alunos/:id', builder: (_, s) => AlunoDetalhePage(id: int.parse(s.pathParameters['id']!))),
+          GoRoute(path: '/alunos/:id/editar', builder: (_, s) => AlunoFormPage(id: int.parse(s.pathParameters['id']!))),
+          GoRoute(path: '/pacotes', builder: (_, __) => const PacotesPage()),
           GoRoute(path: '/usuarios', builder: (_, __) => const UsuariosPage()),
           GoRoute(path: '/configuracoes', builder: (_, __) => const ConfiguracoesPage()),
         ],

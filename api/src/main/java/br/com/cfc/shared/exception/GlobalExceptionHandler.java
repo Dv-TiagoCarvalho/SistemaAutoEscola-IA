@@ -11,6 +11,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponse;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -58,6 +59,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     ProblemDetail corpoInvalido(Exception e) {
         return problema(HttpStatus.BAD_REQUEST, "Requisição inválida", "O corpo ou os parâmetros da requisição estão em formato inválido.");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ProblemDetail arquivoGrande(MaxUploadSizeExceededException e) {
+        return problema(HttpStatus.PAYLOAD_TOO_LARGE, "Arquivo muito grande", "O arquivo excede o limite de 10 MB.");
     }
 
     @ExceptionHandler(AccessDeniedException.class)

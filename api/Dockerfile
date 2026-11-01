@@ -7,7 +7,8 @@ RUN mvn -q -B package -DskipTests
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-RUN useradd -r -u 1001 app
+RUN useradd -r -u 1001 app && mkdir -p /data/uploads && chown app /data/uploads
+ENV STORAGE_PATH=/data/uploads
 COPY --from=build /app/target/*.jar app.jar
 USER app
 EXPOSE 8080

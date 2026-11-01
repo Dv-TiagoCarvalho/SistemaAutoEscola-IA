@@ -32,6 +32,9 @@ services:
       SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-}
       SUPERADMIN_SENHA: ${SUPERADMIN_SENHA:-}
       SEED_EXEMPLO: ${SEED_EXEMPLO:-false}
+      STORAGE_PATH: /data/uploads
+    volumes:
+      - uploads:/data/uploads
     ports:
       - "8080:8080"
 
@@ -44,3 +47,4 @@ services:
 
 volumes:
   mysql-data:
+  uploads:

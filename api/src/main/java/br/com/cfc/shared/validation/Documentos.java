@@ -65,4 +65,26 @@ public final class Documentos {
         int resto = soma % 11;
         return resto < 2 ? 0 : 11 - resto;
     }
+
+    /** Para logs de auditoria: ***.***.***-25 */
+    public static String mascararCpf(String cpf) {
+        String n = normalizarCpf(cpf);
+        return n == null || n.length() != 11 ? null : "***.***.***-" + n.substring(9);
+    }
+
+    public static String formatarCpf(String cpf) {
+        String n = normalizarCpf(cpf);
+        if (n == null || n.length() != 11) {
+            return cpf;
+        }
+        return n.substring(0, 3) + "." + n.substring(3, 6) + "." + n.substring(6, 9) + "-" + n.substring(9);
+    }
+
+    public static String formatarCnpj(String cnpj) {
+        String n = normalizarCnpj(cnpj);
+        if (n == null || n.length() != 14) {
+            return cnpj;
+        }
+        return n.substring(0, 2) + "." + n.substring(2, 5) + "." + n.substring(5, 8) + "/" + n.substring(8, 12) + "-" + n.substring(12);
+    }
 }
