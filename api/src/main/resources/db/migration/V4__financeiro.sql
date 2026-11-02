@@ -32,8 +32,6 @@ CREATE TABLE pagamento (
 
 CREATE INDEX ix_pagamento_data ON pagamento (autoescola_id, data_pagamento);
 CREATE INDEX ix_pagamento_titulo ON pagamento (titulo_id);
-CREATE INDEX ix_titulo_vencimento ON titulo_receber (autoescola_id, status, vencimento);
-CREATE INDEX ix_titulo_aluno ON titulo_receber (autoescola_id, aluno_id);
 
 CREATE TABLE despesa (
     id             BIGINT        NOT NULL AUTO_INCREMENT,
