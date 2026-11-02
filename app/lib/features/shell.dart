@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/formatos.dart';
 import '../core/router.dart';
 import '../core/sessao.dart';
+import 'sino.dart';
 
 /// Estrutura com menu por perfil: barra lateral em telas largas, barra inferior no celular.
 class Shell extends ConsumerWidget {
@@ -23,6 +24,7 @@ class Shell extends ConsumerWidget {
     final appBar = AppBar(
       title: Text(usuario.autoescolaNome ?? 'Plataforma'),
       actions: [
+        if (usuario.perfil != 'SUPER_ADMIN') const Sino(),
         PopupMenuButton<String>(
           tooltip: 'Conta',
           icon: const Icon(Icons.account_circle_outlined),

@@ -114,3 +114,19 @@ quando o instrutor registra a aula ou uma manutenção. Pendente: disponibilidad
 - **Simulados** (`/api/simulados`): sorteio de questões conforme a configuração (quantidade, tempo, acertos mínimos); tempo controlado no servidor (tolerância de 30 s); gabarito só aparece após finalizar; histórico do aluno e visão da secretaria em `/api/alunos/{id}/simulados`.
 - Testes: `SimuladoServiceTest`. Migração `V6__teorico_simulados.sql`.
 - App: aba **Teórico** (aluno faz simulado com cronômetro; equipe gerencia questões e aulas).
+
+## Fase 7 — Painel, relatórios e notificações
+
+- **Dashboard** (`GET /api/dashboard`, ADMIN/SECRETARIA): alunos ativos, aulas de hoje/semana, exames em 7 dias, recebido/saldo do mês, títulos vencidos e veículos com pendência. Substitui a tela inicial provisória do app.
+- **Relatórios** (ADMIN/SECRETARIA): `/api/relatorios/alunos.csv`, `titulos.csv?status&de&ate`, `aulas.csv?de&ate` e `financeiro.pdf?mes=aaaa-mm`. CSV em UTF-8 com BOM, separador `;`, datas dd/mm/aaaa, vírgula decimal e proteção contra injeção de fórmulas em planilhas. Limite de 20 mil linhas.
+- **Notificações no app** (`/api/notificacoes`): sino na barra superior (consulta a cada 60 s). Um job de hora em hora (`LembreteAulaJob`) avisa aluno e instrutor das aulas dentro de `lembrete_horas_antes` (configurável por autoescola), sem repetir o aviso (chave única por usuário/aula). Não há push nem e-mail/WhatsApp ainda — isso exige provedor externo.
+- **PWA**: o `build web` já gera manifest e service worker do Flutter; veja "Como rodar no celular".
+- Testes: `RelatorioServiceTest`, `LembreteAulaJobTest`. Migração `V7__notificacoes.sql`.
+
+## O que falta / limitações conhecidas
+
+- A opção "exigir exame apto para agendar aulas" existe no back-end (padrão: ligada) mas ainda não aparece na tela de Configurações.
+- Disponibilidade semanal do instrutor não foi implementada.
+- Recibo e relatórios não são documentos fiscais. As cláusulas do contrato PDF são genéricas: **precisam de revisão jurídica**.
+- Notificações push/e-mail/WhatsApp e gateway de pagamento real (Pix/boleto) dependem de provedor externo; já existe a interface `PaymentProvider` para plugar.
+- Não há questões oficiais embutidas (direitos autorais): cada autoescola cadastra ou importa as suas.

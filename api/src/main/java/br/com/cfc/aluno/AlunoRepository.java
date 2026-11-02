@@ -11,6 +11,8 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long> {
 
     java.util.Optional<Aluno> findByUsuarioId(Long usuarioId);
 
+    long countByAtivoTrue();
+
 
     boolean existsByCpf(String cpf);
 
